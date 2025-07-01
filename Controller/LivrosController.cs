@@ -1,5 +1,7 @@
+using CatalogoApi.Data;
 using CatalogoApi.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace CatalogoApi.Controllers
 {
@@ -7,32 +9,34 @@ namespace CatalogoApi.Controllers
     [Route("api/[controller]")] // Rota base: /api/livros
     public class LivrosController : ControllerBase
     {
-        // Banco de dados em memória (static para persistir entre requisições)
-        private static List<Livro> _livros = new List<Livro>
+        // 1. DataContext Injetado
+        private readonly DataContext _context;
+
+        public LivrosController(DataContext context)
         {
-          new Livro { Id = 1, Titulo = "A arte da guerra", Autor = "Sun Tzu", AnoDePublicacao = -500 },
-          new Livro { Id = 2, Titulo = "O senhor dos Anéis", Autor = "J.R.R Tolkien", AnoDePublicacao = 1954 },
-          new Livro { Id = 3, Titulo = "1984", Autor = "George Orwell", AnoDePublicacao = 1949  },
-        };
-
-
+            _context = context;
+        }
         // --- Inícios das operações do CRUD ---
 
         // 1. READ: Buscar todos Livros 
         // GET /api/livros 
 
         [HttpGet]
-        public IActionResult GetTodos()
+        public async Task<ActionResult<IEnumerable<Livro>>> GetTodos()
         {
-            return Ok(_livros);
+            // Usa o contexto do banco para buscar todos os livros de forma assíncrona
+            var livros = await _context.Livros.ToListAsync(); 
+            return Ok(livros);
         }
 
         // 2. READ: Buscar apenas um livro por ID 
         // GET /api/livros/{id}
         [HttpGet("{id}")]
-        public IActionResult GetPorId(int id)
-        {
-            var livro = _livros.FirstOrDefault(l => l.Id == id);
+        public async Task<ActionResult<Livro>> GetPorId(int id)
+        {   
+            //FindAsync otimizado para buscar pela chave primaria 
+            var livro = await _context.Livros.FindAsync(id);
+
             if (livro == null)
             {
                 return NotFound(); // Retorna HTTP 404 Se não encontrar.
@@ -42,17 +46,15 @@ namespace CatalogoApi.Controllers
         // 3. CREATE: Adicionar um novo livro 
         // POST /api/livros
         [HttpPost]
-        public IActionResult CriarLivro([FromBody] Livro novoLivro)
+        public async Task<ActionResult<Livro>> CriarLivro([FromBody] Livro novoLivro)
         {
             if (novoLivro == null)
             {
                 return BadRequest(); // Retorna HTTP 400 Se o corpo da requisão for inválido
             }
 
-            // Simula a geração de um novo ID pelo banco de dados 
-            novoLivro.Id = _livros.Any() ? _livros.Max(l => l.Id) + 1 : 1;
-
-            _livros.Add(novoLivro);
+             _context.Livros.Add(novoLivro);
+             await _context.SaveChangesAsync(); 
 
             // Retorna HTTP 201, a URL para o novo recurso 
             return CreatedAtAction(nameof(GetPorId), new { id = novoLivro.Id }, novoLivro);
@@ -62,41 +64,48 @@ namespace CatalogoApi.Controllers
         // 4. UPDATE: Atualizar um livro existente
         // PUT /api/livros/{id}
         [HttpPut("{id}")]
-        public IActionResult AtualizarLivro(int id, [FromBody] Livro livroAtualizado)
+        public async Task<IActionResult> AtualizarLivro(int id, [FromBody] Livro livroAtualizado)
         {
-            if (livroAtualizado == null)
+            if (id != livroAtualizado.Id)
             {
                 return BadRequest();
             }
 
-            var livroExistente = _livros.FirstOrDefault(l => l.Id == id);
+            _context.Entry(livroAtualizado).State = EntityState.Modified;
 
-
-            if (livroExistente == null)
+            try
             {
-                return NotFound();
+                await _context.SaveChangesAsync();
             }
+            catch (DbUpdateConcurrencyException)
+            {
+                //  Verifica se o livro que tentamos atualizar realmente existe
+                if (!_context.Livros.Any(e => e.Id == id))
+                {
+                    return NotFound();
+                }
+                else
+                { 
+                    throw;
+                }
 
-            // Atualiza as propriedades do livro existente 
-            livroExistente.Titulo = livroAtualizado.Titulo;
-            livroExistente.Autor = livroAtualizado.Autor;
-            livroExistente.AnoDePublicacao = livroAtualizado.AnoDePublicacao;
-
+            }
             return NoContent(); // Retorna HTTP 204 indicando sucesso sem conteúdo
         }
 
         // 5. DELETE: Remover um livro 
         // DELETE /api/livros/{id}
         [HttpDelete("{id}")]
-        public IActionResult DeletarLivro(int id)
+        public async Task<IActionResult> DeletarLivro(int id)
         {
-            var livroParaDeletar = _livros.FirstOrDefault(l => l.Id == id);
+            var livroParaDeletar = await _context.Livros.FindAsync(id);
             if (livroParaDeletar == null)
             {
                 return NotFound();
             }
 
-            _livros.Remove(livroParaDeletar);
+            _context.Livros.Remove(livroParaDeletar);
+            await _context.SaveChangesAsync();
 
             return NoContent(); // Retorna HTTP 204 indicando sucesso sem conteúdo
         }
