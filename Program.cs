@@ -1,3 +1,7 @@
+using CatalogoApi.Data;
+using Microsoft.EntityFrameworkCore;
+
+
 // Cria o construtor da aplicação web.
 var builder = WebApplication.CreateBuilder(args);
 
@@ -5,6 +9,12 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Adiciona os serviços de Controllers (para que a API encontre seu LivrosController).
 builder.Services.AddControllers();
+
+// Configuração de conexão bando de dados SQLite
+builder.Services.AddDbContext<DataContext>(options =>
+{
+    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection"));
+});
 
 // Adiciona os serviços necessários para o Swagger funcionar.
 builder.Services.AddEndpointsApiExplorer();
