@@ -53,13 +53,11 @@ namespace CatalogoApi.Controllers
             novoLivro.Id = _livros.Any() ? _livros.Max(l => l.Id) + 1 : 1;
 
             _livros.Add(novoLivro);
-            
+
             // Retorna HTTP 201, a URL para o novo recurso 
-
-
-
+            return CreatedAtAction(nameof(GetPorId), new { id = novoLivro.Id }, novoLivro);
         }
-
+         
 
 
 
