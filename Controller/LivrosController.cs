@@ -31,8 +31,33 @@ namespace CatalogoApi.Controllers
         // GET /api/livros/{id}
         [HttpGet("{id}")]
         public IActionResult GetPorId(int id)
-        { 
-          var livro = _livros  
+        {
+            var livro = _livros.FirstOrDefault(l => l.Id == id);
+            if (livro == null)
+            {
+                return NotFound(); // Retorna HTTP 404 Se não encontrar.
+            }
+            return Ok(livro);
+        }
+        // 3. CREATE: Adicionar um novo livro 
+        // POST /api/livros
+        [HttpPost]
+        public IActionResult CriarLivro([FromBody] Livro novoLivro)
+        {
+            if (novoLivro == null)
+            {
+                return BadRequest(); // Retorna HTTP 400 Se o corpo da requisão for inválido
+            }
+
+            // Simula a geração de um novo ID pelo banco de dados 
+            novoLivro.Id = _livros.Any() ? _livros.Max(l => l.Id) + 1 : 1;
+
+            _livros.Add(novoLivro);
+            
+            // Retorna HTTP 201, a URL para o novo recurso 
+
+
+
         }
 
 
