@@ -11,8 +11,8 @@ namespace CatalogoApi.Controllers
         private static List<Livro> _livros = new List<Livro>
         {
           new Livro { Id = 1, Titulo = "A arte da guerra", Autor = "Sun Tzu", AnoDePublicacao = -500 },
-          new Livro { Id = 2, Titulo = "O senhor dos Anéis", Autor = "Sun Tzu", AnoDePublicacao = -500 },
-          new Livro { Id = 3, Titulo = "A arte da guerra", Autor = "Sun Tzu", AnoDePublicacao = -500 },
+          new Livro { Id = 2, Titulo = "O senhor dos Anéis", Autor = "J.R.R Tolkien", AnoDePublicacao = 1954 },
+          new Livro { Id = 3, Titulo = "1984", Autor = "George Orwell", AnoDePublicacao = 1949  },
         };
 
 
