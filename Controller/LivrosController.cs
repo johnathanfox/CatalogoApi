@@ -57,65 +57,48 @@ namespace CatalogoApi.Controllers
             // Retorna HTTP 201, a URL para o novo recurso 
             return CreatedAtAction(nameof(GetPorId), new { id = novoLivro.Id }, novoLivro);
         }
-         
 
 
+        // 4. UPDATE: Atualizar um livro existente
+        // PUT /api/livros/{id}
+        [HttpPut("{id}")]
+        public IActionResult AtualizarLivro(int id, [FromBody] Livro livroAtualizado)
+        {
+            if (livroAtualizado == null)
+            {
+                return BadRequest();
+            }
+
+            var livroExistente = _livros.FirstOrDefault(l => l.Id == id);
 
 
+            if (livroExistente == null)
+            {
+                return NotFound();
+            }
 
+            // Atualiza as propriedades do livro existente 
+            livroExistente.Titulo = livroAtualizado.Titulo;
+            livroExistente.Autor = livroAtualizado.Autor;
+            livroExistente.AnoDePublicacao = livroAtualizado.AnoDePublicacao;
+
+            return NoContent(); // Retorna HTTP 204 indicando sucesso sem conteúdo
+        }
+
+        // 5. DELETE: Remover um livro 
+        // DELETE /api/livros/{id}
+        [HttpDelete("{id}")]
+        public IActionResult DeletarLivro(int id)
+        {
+            var livroParaDeletar = _livros.FirstOrDefault(l => l.Id == id);
+            if (livroParaDeletar == null)
+            {
+                return NotFound();
+            }
+
+            _livros.Remove(livroParaDeletar);
+
+            return NoContent(); // Retorna HTTP 204 indicando sucesso sem conteúdo
+        }
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 }
